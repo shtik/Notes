@@ -7,9 +7,8 @@ namespace ShtikLive.Notes.Data
     {
         public int Id { get; set; }
 
-        public int ShowId { get; set; }
-
-        public int SlideNumber { get; set; }
+        [MaxLength(256)]
+        public string SlideIdentifier { get; set; }
 
         [MaxLength(16)]
         public string UserHandle { get; set; }

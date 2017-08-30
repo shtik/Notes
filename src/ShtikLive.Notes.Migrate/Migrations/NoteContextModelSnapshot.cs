@@ -29,9 +29,8 @@ namespace ShtikLive.Notes.Migrate.Migrations
 
                     b.Property<bool>("Public");
 
-                    b.Property<int>("ShowId");
-
-                    b.Property<int>("SlideNumber");
+                    b.Property<string>("SlideIdentifier")
+                        .HasMaxLength(256);
 
                     b.Property<DateTimeOffset>("Timestamp");
 
@@ -39,6 +38,9 @@ namespace ShtikLive.Notes.Migrate.Migrations
                         .HasMaxLength(16);
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserHandle", "SlideIdentifier")
+                        .IsUnique();
 
                     b.ToTable("Notes");
                 });

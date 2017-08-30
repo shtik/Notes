@@ -11,7 +11,7 @@ using System;
 namespace ShtikLive.Notes.Migrate.Migrations
 {
     [DbContext(typeof(NoteContext))]
-    [Migration("20170820214909_InitialCreate")]
+    [Migration("20170830195033_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -30,9 +30,8 @@ namespace ShtikLive.Notes.Migrate.Migrations
 
                     b.Property<bool>("Public");
 
-                    b.Property<int>("ShowId");
-
-                    b.Property<int>("SlideNumber");
+                    b.Property<string>("SlideIdentifier")
+                        .HasMaxLength(256);
 
                     b.Property<DateTimeOffset>("Timestamp");
 
@@ -40,6 +39,9 @@ namespace ShtikLive.Notes.Migrate.Migrations
                         .HasMaxLength(16);
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserHandle", "SlideIdentifier")
+                        .IsUnique();
 
                     b.ToTable("Notes");
                 });

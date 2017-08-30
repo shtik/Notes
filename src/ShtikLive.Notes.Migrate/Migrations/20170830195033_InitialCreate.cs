@@ -17,8 +17,7 @@ namespace ShtikLive.Notes.Migrate.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
                     NoteText = table.Column<string>(type: "text", nullable: true),
                     Public = table.Column<bool>(type: "bool", nullable: false),
-                    ShowId = table.Column<int>(type: "int4", nullable: false),
-                    SlideNumber = table.Column<int>(type: "int4", nullable: false),
+                    SlideIdentifier = table.Column<string>(type: "varchar(256)", maxLength: 256, nullable: true),
                     Timestamp = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     UserHandle = table.Column<string>(type: "varchar(16)", maxLength: 16, nullable: true)
                 },
@@ -26,6 +25,12 @@ namespace ShtikLive.Notes.Migrate.Migrations
                 {
                     table.PrimaryKey("PK_Notes", x => x.Id);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notes_UserHandle_SlideIdentifier",
+                table: "Notes",
+                columns: new[] { "UserHandle", "SlideIdentifier" },
+                unique: true);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

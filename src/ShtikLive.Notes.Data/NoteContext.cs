@@ -15,5 +15,14 @@ namespace ShtikLive.Notes.Data
         }
 
         public DbSet<Note> Notes { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+
+            builder.Entity<Note>()
+                .HasIndex(n => new {n.UserHandle, n.SlideIdentifier})
+                .IsUnique();
+        }
     }
 }

@@ -1,67 +1,66 @@
 ﻿using System;
-using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ShtikLive.Notes.Data;
+using ShtikLive.Notes.Models;
 
 namespace ShtikLive.Notes.Controllers
 {
     using static ResultMethods;
 
-    [Route("notes")]
     public class NotesController
     {
+        private readonly ILogger<NotesController> _logger;
         private readonly NoteContext _context;
 
-        public NotesController(NoteContext context)
+        public NotesController(NoteContext context, ILogger<NotesController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
-        [HttpGet("{userHandle}/{showId}/{slideNumber}")]
-        public async Task<IActionResult> GetForSlide(string userHandle, int showId, int slideNumber)
+        [HttpGet("{user}/{presenter}/{slug}/{number}")]
+        public async Task<IActionResult> GetForSlide(string user, string presenter, string slug, int number, CancellationToken ct)
         {
+            var slideIdentifier = $"{presenter}/{slug}/{number}";
+            try
+            {
+                var existingNote = await _context.Notes
+            .SingleOrDefaultAsync(n => n.UserHandle == user && n.SlideIdentifier == slideIdentifier, ct)
+            .ConfigureAwait(false);
+
+            return existingNote == null ? NotFound() : Ok(NoteDto.FromNote(existingNote));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(EventIds.DatabaseError, ex, ex.Message);
+                throw;
+            }
+        }
+
+        [HttpPut("{user}/{presenter}/{slug}/{number}")]
+        public async Task<IActionResult> SetForSlide(string user, string presenter, string slug, int number, [FromBody] NoteDto note, CancellationToken ct)
+        {
+            var slideIdentifier = $"{presenter}/{slug}/{number}";
             var existingNote = await _context.Notes
-                .SingleOrDefaultAsync(n =>
-                    n.ShowId == showId && n.SlideNumber == slideNumber && n.UserHandle == userHandle)
-                .ConfigureAwait(false);
-            return existingNote == null ? NotFound() : Ok(existingNote);
-        }
-
-        [HttpGet("{userHandle}/{showId}")]
-        public async Task<IActionResult> GetForShow(string userHandle, int showId)
-        {
-            var existingNotes = await _context.Notes
-                .Where(n =>
-                    n.ShowId == showId && n.UserHandle == userHandle)
-                .OrderBy(n => n.SlideNumber)
-                .ToListAsync()
-                .ConfigureAwait(false);
-            return Ok(existingNotes);
-        }
-
-        [HttpPut("{userHandle}/{showId}/{slideNumber}")]
-        public async Task<IActionResult> Write(string userHandle, int showId, int slideNumber, [FromBody] Note note)
-        {
-            var existingNote = await _context.Notes
-                .SingleOrDefaultAsync(n =>
-                    n.ShowId == showId && n.SlideNumber == slideNumber && n.UserHandle == userHandle)
+                .SingleOrDefaultAsync(n => n.UserHandle == user && n.SlideIdentifier == slideIdentifier, ct)
                 .ConfigureAwait(false);
             if (existingNote == null)
             {
-                note.ShowId = showId;
-                note.SlideNumber = slideNumber;
-                note.UserHandle = userHandle;
-                note.Timestamp = DateTimeOffset.UtcNow;
-                _context.Notes.Add(note);
+                existingNote = new Note
+                {
+                    Public = false,
+                    SlideIdentifier = slideIdentifier,
+                    UserHandle = user
+                };
+                _context.Notes.Add(existingNote);
             }
-            else
-            {
-                existingNote.NoteText = note.NoteText;
-                existingNote.Timestamp = DateTimeOffset.UtcNow;
-            }
-            await _context.SaveChangesAsync().ConfigureAwait(false);
+            existingNote.NoteText = note.Text;
+            existingNote.Timestamp = DateTimeOffset.UtcNow;
+            await _context.SaveChangesAsync(ct).ConfigureAwait(false);
             return Accepted();
         }
     }

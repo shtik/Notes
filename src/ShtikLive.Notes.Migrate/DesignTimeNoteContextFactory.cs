@@ -6,7 +6,7 @@ namespace ShtikLive.Notes.Migrate
 {
     public class DesignTimeNoteContextFactory : IDesignTimeDbContextFactory<NoteContext>
     {
-        public const string LocalPostgres = "Host=localhost;Database=notes;Username=notes;Password=secretsquirrel";
+        public const string LocalPostgres = "Host=localhost;Database=notes;Username=shtik;Password=secretsquirrel";
 
         public static readonly string MigrationAssemblyName =
             typeof(DesignTimeNoteContextFactory).Assembly.GetName().Name;
