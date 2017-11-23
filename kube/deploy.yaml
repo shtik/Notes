@@ -1,0 +1,37 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: notes
+  namespace: shtik
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: notes
+    spec:
+      containers:
+      - image: shtik/notes:1.1.0
+        imagePullPolicy: Always
+        name: notes
+        env:
+          - name: ConnectionStrings__Notes
+            valueFrom:
+              secretKeyRef:
+                name: notes-db
+                key: connstr
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notes
+  namespace: shtik
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: notes

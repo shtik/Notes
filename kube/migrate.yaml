@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: notes-migrate
+  namespace: shtik
+spec:
+  template:
+    metadata:
+      name: notes-migrate
+    spec:
+      containers:
+      - name: notes-migrate
+        image: shtik/notes-migrate:1.1.0
+        args: ["$(SECRET_CONNSTR)"]
+        env:
+          - name: SECRET_CONNSTR
+            valueFrom:
+              secretKeyRef:
+                name: notes-db
+                key: connstr
+      restartPolicy: OnFailure
